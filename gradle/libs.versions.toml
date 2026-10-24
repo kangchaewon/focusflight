@@ -1,5 +1,6 @@
 [versions]
-agp = "9.4.1"
+# 설치된 Android Studio가 지원하는 최신 버전. Studio를 업데이트하면 올릴 수 있다.
+agp = "9.1.0"
 kotlin = "2.4.21"
 ksp = "2.3.12"
 hilt = "2.60.1"
