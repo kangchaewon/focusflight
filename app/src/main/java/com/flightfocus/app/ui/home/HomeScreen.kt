@@ -36,9 +36,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val withNotificationPermission = rememberNotificationPermissionGate()
 
     Column(Modifier.fillMaxSize()) {
-        Header(state, onCharter = { if (viewModel.takeOffCharter()) onTakeOff() })
+        Header(state, onCharter = {
+            withNotificationPermission { if (viewModel.takeOffCharter()) onTakeOff() }
+        })
 
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -53,7 +56,7 @@ fun HomeScreen(
         state.selected?.let { route ->
             Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                 Button(
-                    onClick = { if (viewModel.takeOffScheduled()) onTakeOff() },
+                    onClick = { withNotificationPermission { if (viewModel.takeOffScheduled()) onTakeOff() } },
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
                 ) {
                     Text(

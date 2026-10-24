@@ -24,6 +24,27 @@ data class FlightSessionEntity(
     val miles: Long,
 )
 
+/**
+ * 진행 중인 비행. 행은 항상 0개 또는 1개.
+ * 프로세스가 죽어도 이 값만 있으면 타임스탬프로 비행을 정확히 이어갈 수 있다.
+ */
+@Entity(tableName = "active_flight")
+data class ActiveFlightEntity(
+    @PrimaryKey val id: Int = SINGLETON_ID,
+    val mode: FlightMode,
+    val originIata: String,
+    val destinationIata: String?,
+    val aircraft: AircraftTier,
+    val targetMinutes: Int?,
+    val startedAt: Long,
+    val turbulenceStartedAt: Long?,
+    val turbulenceTotalMillis: Long,
+) {
+    companion object {
+        const val SINGLETON_ID = 0
+    }
+}
+
 /** 마일리지 잔액 = 비행으로 번 마일 합계 - 기종 해금에 쓴 마일 합계. 잔액은 따로 저장하지 않는다. */
 @Entity(tableName = "aircraft_unlocks")
 data class AircraftUnlockEntity(

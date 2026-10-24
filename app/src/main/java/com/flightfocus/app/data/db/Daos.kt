@@ -4,27 +4,44 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.flightfocus.app.domain.economy.HangarRules
 import com.flightfocus.app.domain.economy.UnlockCheck
 import com.flightfocus.app.domain.model.AircraftTier
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface FlightDao {
+abstract class FlightDao {
     @Insert
-    suspend fun insert(session: FlightSessionEntity): Long
+    protected abstract suspend fun insert(session: FlightSessionEntity): Long
 
     @Query("SELECT * FROM flight_sessions ORDER BY startedAt DESC")
-    fun observeAll(): Flow<List<FlightSessionEntity>>
+    abstract fun observeAll(): Flow<List<FlightSessionEntity>>
 
     @Query("SELECT * FROM flight_sessions ORDER BY endedAt DESC LIMIT 1")
-    fun observeLatest(): Flow<FlightSessionEntity?>
+    abstract fun observeLatest(): Flow<FlightSessionEntity?>
 
     @Query("SELECT COALESCE(SUM(creditedMinutes), 0) FROM flight_sessions WHERE startedAt >= :from AND startedAt < :to")
-    suspend fun creditedMinutesBetween(from: Long, to: Long): Int
+    abstract suspend fun creditedMinutesBetween(from: Long, to: Long): Int
 
     @Query("SELECT COALESCE(SUM(miles), 0) FROM flight_sessions")
-    fun observeEarnedMiles(): Flow<Long>
+    abstract fun observeEarnedMiles(): Flow<Long>
+
+    @Query("SELECT * FROM active_flight LIMIT 1")
+    abstract suspend fun activeFlight(): ActiveFlightEntity?
+
+    @Upsert
+    abstract suspend fun saveActiveFlight(flight: ActiveFlightEntity)
+
+    @Query("DELETE FROM active_flight")
+    abstract suspend fun clearActiveFlight()
+
+    /** 기록 저장과 진행 중 비행 삭제를 한 트랜잭션으로 묶어, 중간에 죽어도 같은 비행이 두 번 정산되지 않게 한다. */
+    @Transaction
+    open suspend fun completeFlight(session: FlightSessionEntity): Long {
+        clearActiveFlight()
+        return insert(session)
+    }
 }
 
 @Dao

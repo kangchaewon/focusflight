@@ -35,9 +35,9 @@ import com.flightfocus.app.domain.economy.Settlement
 import com.flightfocus.app.domain.flight.FlightState
 import com.flightfocus.app.domain.model.ActiveFlight
 import com.flightfocus.app.domain.model.FlightMode
-import com.flightfocus.app.domain.model.FlightOutcome
-import com.flightfocus.app.domain.model.FlightPlan
 import com.flightfocus.app.domain.model.FlightResult
+import com.flightfocus.app.flight.headline
+import com.flightfocus.app.flight.routeText
 import com.flightfocus.app.ui.clockText
 import com.flightfocus.app.ui.durationText
 import com.flightfocus.app.ui.miles
@@ -142,13 +142,7 @@ private fun InFlight(flight: ActiveFlight, now: () -> Long, onLand: () -> Unit) 
 
 @Composable
 private fun Arrival(result: FlightResult, settlement: Settlement?, onDone: () -> Unit) {
-    val (title, subtitle) = when (result.outcome) {
-        FlightOutcome.COMPLETED ->
-            if (result.plan.mode == FlightMode.SCHEDULED) "✅ 정시 도착" to "${result.plan.destination?.nameKo}에 도착했습니다"
-            else "🛬 착륙 완료" to "부정기편 비행을 마쳤습니다"
-        FlightOutcome.LANDED_EARLY -> "🛬 조기 착륙" to "${result.plan.origin.nameKo}(으)로 돌아왔습니다"
-        FlightOutcome.DIVERTED -> "🌪️ 비상 회항" to "난기류로 ${result.plan.origin.nameKo}(으)로 회항했습니다"
-    }
+    val (title, subtitle) = result.headline()
 
     Column(
         Modifier.fillMaxSize().padding(24.dp),
@@ -191,6 +185,3 @@ private fun Arrival(result: FlightResult, settlement: Settlement?, onDone: () ->
         }
     }
 }
-
-private fun FlightPlan.routeText(): String =
-    destination?.let { "${origin.iata} → ${it.iata}" } ?: "${origin.iata} 출발"

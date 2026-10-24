@@ -6,6 +6,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -14,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.flightfocus.app.domain.flight.FlightState
 import com.flightfocus.app.ui.cockpit.CockpitScreen
 import com.flightfocus.app.ui.hangar.HangarScreen
 import com.flightfocus.app.ui.home.HomeScreen
@@ -34,11 +36,19 @@ private val tabs = listOf(
 )
 
 @Composable
-fun FlightFocusNavHost() {
+fun FlightFocusNavHost(flightState: FlightState) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val inCockpit = destination?.hasRoute(CockpitRoute::class) == true
+
+    // 앱을 다시 열었을 때 복원된 비행이 있으면 조종석으로 보낸다
+    val airborne = flightState is FlightState.Airborne
+    LaunchedEffect(airborne, destination) {
+        if (airborne && destination != null && !inCockpit) {
+            navController.navigate(CockpitRoute) { launchSingleTop = true }
+        }
+    }
 
     Scaffold(
         bottomBar = {

@@ -112,4 +112,27 @@ class FlightStateMachineTest {
         assertEquals(arrived, arrived.on(FlightEvent.Tick(t0 + 2 * MIN)))
         assertEquals(FlightState.Idle, arrived.on(FlightEvent.Acknowledge(t0 + 2 * MIN)))
     }
+
+    @Test
+    fun `앱이 꺼진 사이 목표 시간이 지났으면 복원 직후 정확한 시각으로 착륙한다`() {
+        // 난기류 10초를 겪고 복귀한 뒤 프로세스가 죽었다가 2시간 뒤 복원
+        val restored = airborne(scheduled(25)).on(
+            FlightEvent.LeftApp(t0 + 3 * MIN),
+            FlightEvent.ReturnedToApp(t0 + 3 * MIN + 10 * SEC),
+        )
+
+        val result = restored.on(FlightEvent.Tick(t0 + 120 * MIN)).result()
+        assertEquals(FlightOutcome.COMPLETED, result.outcome)
+        assertEquals(25, result.flownMinutes)
+        assertEquals(t0 + 25 * MIN + 10 * SEC, result.endedAtMillis)
+    }
+
+    @Test
+    fun `난기류 중 프로세스가 죽었다가 복원되면 회항으로 처리한다`() {
+        val restored = airborne(scheduled(25)).on(FlightEvent.LeftApp(t0 + 4 * MIN))
+
+        val result = restored.on(FlightEvent.ReturnedToApp(t0 + 60 * MIN)).result()
+        assertEquals(FlightOutcome.DIVERTED, result.outcome)
+        assertEquals(4, result.flownMinutes)
+    }
 }

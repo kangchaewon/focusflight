@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flightfocus.app.flight.FlightController
 import com.flightfocus.app.ui.FlightFocusNavHost
 import com.flightfocus.app.ui.theme.FlightFocusTheme
@@ -27,8 +29,9 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         setContent {
+            val flightState by flightController.state.collectAsStateWithLifecycle()
             FlightFocusTheme {
-                FlightFocusNavHost()
+                FlightFocusNavHost(flightState)
             }
         }
     }

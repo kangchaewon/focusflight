@@ -3,8 +3,11 @@ package com.flightfocus.app.data
 import com.flightfocus.app.data.airport.AirportRepository
 import com.flightfocus.app.data.db.FlightDao
 import com.flightfocus.app.data.db.FlightSessionEntity
+import com.flightfocus.app.data.db.toDomain
+import com.flightfocus.app.data.db.toEntity
 import com.flightfocus.app.domain.economy.MileageCalculator
 import com.flightfocus.app.domain.economy.Settlement
+import com.flightfocus.app.domain.model.ActiveFlight
 import com.flightfocus.app.domain.model.Airport
 import com.flightfocus.app.domain.model.FlightOutcome
 import com.flightfocus.app.domain.model.FlightResult
@@ -31,12 +34,23 @@ class FlightRepository @Inject constructor(
         airports.find(iata) ?: airports.home
     }
 
-    /** 비행 결과를 정산하고 기록한다. */
+    /** 저장된 진행 중 비행. 복원할 수 없는 값이면 지우고 null. */
+    suspend fun loadActiveFlight(): ActiveFlight? {
+        val entity = flightDao.activeFlight() ?: return null
+        return entity.toDomain(airports::find) ?: run {
+            flightDao.clearActiveFlight()
+            null
+        }
+    }
+
+    suspend fun saveActiveFlight(flight: ActiveFlight) = flightDao.saveActiveFlight(flight.toEntity())
+
+    /** 비행 결과를 정산해 기록하고, 진행 중 비행을 지운다. */
     suspend fun record(result: FlightResult): Settlement {
         val today = time.todayRangeMillis()
         val creditedToday = flightDao.creditedMinutesBetween(today.first, today.last + 1)
         val settlement = MileageCalculator.settle(result, creditedToday)
-        flightDao.insert(
+        flightDao.completeFlight(
             FlightSessionEntity(
                 mode = result.plan.mode,
                 originIata = result.plan.origin.iata,
