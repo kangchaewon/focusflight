@@ -40,9 +40,11 @@ app/src/main/java/com/flightfocus/app/
 
 ## 빌드
 
-Android Studio(JDK 21 내장)와 SDK Platform 37이 필요하다.
+- **Android Studio 최신 버전**: AGP 9.4.1과 compileSdk 37을 인식해야 한다. 오래된 버전은 Gradle Sync가 실패한다.
+- **SDK Platform 37** (SDK Manager에서 설치)
+- **JDK**: Gradle 데몬은 JDK 21에서 돈다(`gradle/gradle-daemon-jvm.properties`). 없으면 Gradle이 자동으로 내려받는다.
 
-> ⚠️ 프로젝트 경로에 작은따옴표(`'`)가 있으면 Gradle 단위 테스트가 `ClassNotFoundException`으로 실패한다. 빌드는 되지만 테스트를 돌리려면 따옴표 없는 경로에 두어야 한다.
+> ⚠️ 프로젝트 경로에 작은따옴표(`'`)가 있으면 Gradle 단위 테스트가 `ClassNotFoundException`으로 실패한다.
 
 ```bash
 ./gradlew :app:testDebugUnitTest   # 단위 테스트
